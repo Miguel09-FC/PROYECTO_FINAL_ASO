@@ -1,0 +1,83 @@
+# Instalar Active Directory
+Add-WindowsFeature AD-Domain-Services
+Install-WindowsFeature RSAT-AD-Tools
+
+# Crear un dominio (Aquí puedes adaptar el código y cambiar el nombre del dominio)
+Import-Module ADDSDeployment
+Install-ADDSForest `
+-CreateDnsDelegation:$false `
+-DatabasePath "C:\Windows\NTDS" `
+-DomainMode "Win2012R2" `
+-DomainName "andel.local" `
+-DomainNetbiosName "ANDEL" `
+-ForestMode "Win2012R2" `
+-InstallDns:$true `
+-LogPath "C:\Windows\NTDS" `
+-NoRebootOnCompletion:$true `
+-SysvolPath "C:\Windows\SYSVOL" `
+-Force:$true
+
+# Instalar servicio IIS
+Install-WindowsFeature -name Web-Server -IncludeManagementTools
+    
+# Crear carpeta web necesaria para lo siguiente
+mkdir C:\web
+
+# Crear un sitio IIS con PowerShell
+Import-Module webadministration
+Set-Location IIS:\AppPools\
+$web = New-Item C:\web\ -ItemType directory -Force
+"<html><h1>Hola Feos de kk</h1></html>" | Out-File C:\web\index.html
+$Website = New-Website -Name "pruebaweb" -HostHeader "" -Port 81 -PhysicalPath $web -ApplicationPool "DefaultAppPool"
+
+# Reiniciar ordenador
+Restart-computer
+
+############################################################################################################################
+
+# Crear varios sitios para varios clientes que están en un fichero. (Para que esto funciona debes tener el fichero clientes.txt y adaptar la ruta)
+Install-WindowsFeature -Name Web-Windows-Auth -IncludeManagementTools
+Import-Module webadministration
+Set-Location IIS:\AppPools\
+$numero = 82
+
+foreach($valor in Get-Content C:\Users\Administrador\Desktop\clientes.txt)
+{
+   $web = New-Item C:\web\$valor –ItemType directory -Force
+   "<html>hola eres un paquete y esta web es especialmente para "+$Valor+"</html>" | Out-File C:\web\$valor\index.html
+   $Website = New-Website -Name $valor -HostHeader "" -Port $numero -PhysicalPath $web -ApplicationPool "DefaultAppPool"
+   $numero = $numero + 1
+}
+
+# Crear U.O. (Puedes adaptar los nombres de la U.O a los que tu desees)
+dsadd OU "OU=asir,DC=Andel,Dc=local" 
+dsadd OU "OU=alumnos,OU=asir,DC=Andel,Dc=local" 
+dsadd OU "OU=profesores,OU=asir,DC=Andel,Dc=local"
+
+# Crear usuarios de forma masiva, crear unidades organizativas y añadir usuarios a U.O. (Para que esto funciona debes tener el fichero clientes.txt y adaptar la ruta)
+foreach($usuario in Get-Content C:\Users\Administrador\Desktop\clientes.txt)
+{
+    $usuario
+    $password = (ConvertTo-SecureString "Andel1928" -AsPlainText -force)
+    New-ADUSer -Name $usuario -Sam $usuario -Path "OU=alumnos,OU=asir,DC=andel,DC=local" -AccountPassword $password -Enable $true
+}
+
+# Configuración de IIS: Habilitar la autenticación de Windows y deshabilitar la autenticación anónima.
+Set-WebConfigurationProperty -Filter "/system.webServer/security/authentication/windowsAuthentication" -Name "enabled" -Value "True" -PSPath "IIS:\Sites\"
+Set-WebConfigurationProperty -Filter "/system.webServer/security/authentication/anonymousAuthentication" -Name "enabled" -Value "False" -PSPath "IIS:\Sites\"
+
+# Reiniciar el sitio para aplicar los cambios
+Restart-WebAppPool -Name pruebaweb
+
+################################
+
+# Configuración de Red (Recuerda que tienes que adaptar el código, si no no funcionará)
+$ip = "Ip"
+$subred= "Máscara de red"
+$gateway = "Puerta de enlace"
+$dns = "DNS"
+
+$interface = "nombre_interfaz"
+
+New-NetIPAddress -InterfaceAlias $interface -IPAddress $ip -PrefixLength 24 -DefaultGateway $gateway
+Set-DnsClientServerAddress -InterfaceAlias $interface -ServerAddresses $dns
