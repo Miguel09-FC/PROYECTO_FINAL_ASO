@@ -1,6 +1,6 @@
 # FINAL-ASO
 
-# Instalar el rol de Directorio Activo, crear una estructura de dominio, instalar IIS y permitir que se pueda acceder al IIS mediante usuario y contraseña creados anteriormente en el Directorio Activo
+# [Instalar el rol de Directorio Activo, crear una estructura de dominio, instalar IIS y permitir que se pueda acceder al IIS mediante usuario y contraseña creados anteriormente en el Directorio Activo](https://github.com/jesusninoc/ClasesASO/blob/master/2024-02-20.md)
 
 ***Script PowerShell:***
 
