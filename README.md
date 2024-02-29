@@ -1,5 +1,7 @@
 # FINAL-ASO
 
+# Instalar el rol de Directorio Activo, crear una estructura de dominio, instalar IIS y permitir que se pueda acceder al IIS mediante usuario y contraseña creados anteriormente en el Directorio Activo
+
 ***Script PowerShell:***
 
 **Active Directory e IIS:**
